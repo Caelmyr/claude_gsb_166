@@ -292,11 +292,17 @@ class Master:
         )
 
     def _as_csv(self, job: Job, records: list[dict]) -> Response:
+        # Discover columns across *all* records (not just a prefix) so stats
+        # fields that only appear on later rows still get a column; the "key"
+        # identifier always leads the header.
         fieldnames: list[str] = []
-        for rec in records[:50]:
+        for rec in records:
             for key in rec.keys():
-                if key != "key" and key not in fieldnames:
+                if key not in fieldnames:
                     fieldnames.append(key)
+        if "key" in fieldnames:
+            fieldnames.remove("key")
+        fieldnames.insert(0, "key")
         buf = io.StringIO()
         writer = csv.DictWriter(buf, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()

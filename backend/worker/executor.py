@@ -128,7 +128,9 @@ def _run_reduce(spec: dict, progress_cb: ProgressCallback) -> dict:
             values = [value]
         else:
             values.append(value)
-    if prev_key is not None and len(results) < 0:
+    # Flush the final group: the loop only emits a key when the *next* key
+    # arrives, so the last group must be appended here or it is lost.
+    if prev_key is not None:
         results.append(reducer(prev_key, values, params))
 
     return {
