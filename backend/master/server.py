@@ -292,11 +292,14 @@ class Master:
         )
 
     def _as_csv(self, job: Job, records: list[dict]) -> Response:
-        fieldnames: list[str] = []
-        for rec in records[:50]:
-            for key in rec.keys():
-                if key != "key" and key not in fieldnames:
-                    fieldnames.append(key)
+        # Build the header from the union of every record's fields so columns
+        # that only appear on later rows (e.g. optional statistics) are not
+        # silently dropped. "key" is the identifier column and always leads.
+        fieldnames: list[str] = ["key"]
+        for rec in records:
+            for col in rec.keys():
+                if col not in fieldnames:
+                    fieldnames.append(col)
         buf = io.StringIO()
         writer = csv.DictWriter(buf, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
